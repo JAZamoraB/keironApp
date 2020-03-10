@@ -10,7 +10,9 @@ $font-size-base: 0.9rem;
 $line-height-base: 1.6;
 
 // Colors
-$blue: #3490dc;
+$superColor: #DB077A;
+$blue: $superColor;
+// $blue: #3490dc;
 $indigo: #6574cd;
 $purple: #9561e2;
 $pink: #f66d9b;
@@ -21,7 +23,6 @@ $green: #38c172;
 $teal: #4dc0b5;
 $cyan: #6cb2eb;
 
-$superColor: #DB077A;
 // $superColor: linear-gradient(#DB077A,#E5252C);
 
 $enable-rounded: false;
@@ -83,6 +84,24 @@ $theme-textColors: (
             background: linear-gradient( rgb(218, 61, 147),rgb(243, 22, 30)) !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
+        }
+    }
+}
+.nav-pills {
+    font-size: 1.5rem;
+
+    font-family: Roboto;
+    .nav-link{
+        transition: all 250ms;
+        color: var(--secondary) !important;
+        // color: var(--super) !important;
+        min-width: 128px;
+        text-align: center;
+        
+        &.active{
+            font-family: Roboto-Bold !important;
+            color: var(--light) !important;
+            background-color: var(--super) !important;
         }
     }
 }

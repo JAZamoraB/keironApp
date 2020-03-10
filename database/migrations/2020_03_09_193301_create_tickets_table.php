@@ -17,7 +17,8 @@ class CreateTicketsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             // $table->unsignedInteger('admin_id');
-            $table->string('name');
+            $table->string('name')->unique();
+            $table->boolean('used')->default(false);
             $table->timestamps();
         });
     }

@@ -66,6 +66,24 @@
   -webkit-text-fill-color: transparent !important;
 }
 
+.nav-pills {
+  font-size: 1.5rem;
+  font-family: Roboto;
+}
+
+.nav-pills .nav-link {
+  transition: all 250ms;
+  color: var(--secondary) !important;
+  min-width: 128px;
+  text-align: center;
+}
+
+.nav-pills .nav-link.active {
+  font-family: Roboto-Bold !important;
+  color: var(--light) !important;
+  background-color: var(--super) !important;
+}
+
 /*!
  * Bootstrap v4.4.1 (https://getbootstrap.com/)
  * Copyright 2011-2019 The Bootstrap Authors
