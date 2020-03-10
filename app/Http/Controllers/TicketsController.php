@@ -23,4 +23,19 @@ class TicketsController extends Controller
         return redirect()->back();
         // dd($NU);
     }
+
+    public function asyncCreate(Request $request){
+        // return $request->all();
+        if(Ticket::where("name", $request->name)->first()){
+            return false;
+        }
+        $new = Ticket::create(["user_id" => $request->input("user"), "name" => $request->input("name")]);
+        return $new;
+    }
+    public function ticketValidation(Request $request){
+        if(Ticket::where("name", $request->name)->first()){
+            return false;
+        }
+        return true;
+    }
 }

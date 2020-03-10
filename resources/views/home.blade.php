@@ -4,7 +4,7 @@
 @section('title', 'Keirón | Principal')
 @section('content')
 
-<div class="container" style="height: 100vh;">
+<div class="container" style="min-height: 100vh;">
     <div class="row h-100 flex-column justify-content-center">
         <div class="col-auto py-4 py-md-5 mx-auto">
             <a href="{{route('welcome')}}">
@@ -48,8 +48,8 @@
                             @foreach (Auth::user()->tickets as $ticket)
                             <tr>
                                 <th scope="row">{{$ticket->name}}</th>
-                                <td>{{$ticket->updated_at}}</td>
-                                <td>{{$ticket->used}}</td>
+                                <td>{{$ticket->created_at}}</td>
+                                <td>@if ($ticket->used) Utilizado el {{$ticket->updated_at}} @else No @endif</td>
                                 <td>
                                     @if ($ticket->used)
                                     <button disabled class="btn btn-sm btn-success">
@@ -85,10 +85,11 @@
                             <tr>
                                 <th scope="row">{{$ticket->name}}</th>
                                 <td>{{$ticket->user->name}}</td>
-                                <td>{{$ticket->used}}</td>
+                                <td>@if ($ticket->used) Utilizado el {{$ticket->updated_at}} @else No @endif</td>
                                 <td>
                                     <div class="btn-group btn-group-sm" style="font-family: Roboto;">
-                                        <button type="button" class="btn btn-info border-0">
+                                        <button type="button" class="btn btn-info border-0" data-toggle="modal"
+                                        data-target="#edit">
                                             <i class="fas fa-edit"></i> Editar
                                         </button>
                                         <button type="button" class="btn btn-danger border-0">
@@ -117,12 +118,58 @@
         </div>
     </div>
 </div>
+@if (Auth::user()->role->id == 1)
 
 <div class="modal fade" id="create" tabindex="-1" role="dialog" aria-labelledby="createTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createTitle">Nuevo Ticket</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{route('tickets.store')}}" onsubmit="validateForm()" method="POST">
+                <div class="modal-body">
+                    @method('post')
+                    @csrf
+                    <div class="form-row">
+                        <div class="col">
+                            <label for="Tname">Nombre Ticket</label>
+                            <input type="text" class="form-control" placeholder="Nombre Ticket" id="Tname" name="Tname"
+                                required>
+                        </div>
+                        <div class="col">
+                            <label for="Tuser">Nombre Ticket</label>
+                            <select name="Tuser" id="Tuser" class="form-control" required>
+                                <option value="" selected disabled>Selecciona una opción</option>
+                                @foreach (\App\User::all() as $user)
+                                <option value="{{$user->id}}">{{$user->name}} - {{$user->email}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" style="font-size: 1.25rem; font-family: Roboto;"
+                        class="btn btn-outline-secondary border-0" data-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cerrar
+                    </button>
+                    <button type="submit" style="font-size: 1.25rem; font-family: Roboto-Bold;" class="btn btn-super">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{-- <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="editTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTitle">Editar Ticket <span class="font-family: Roboto-Bold;">Cupón 1</span></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -162,7 +209,8 @@
             </form>
         </div>
     </div>
-</div>
+</div> --}}
+@endif
 {{-- <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -198,4 +246,50 @@
 </div>
 </div>
 </div> --}}
+@endsection
+
+@section('js')
+@if (Auth::user()->role->id == 1)
+    <script>
+        function validateForm(){
+            event.preventDefault();
+            var inputs = {
+                name: event.target.querySelector("#Tname").value,
+                user: event.target.querySelector("#Tuser").value,
+            }
+            console.log({form: event.target})
+            axios({
+                url: '/ticketValidation',
+                method: "post",
+                data: inputs,
+            }).then(res => {
+                console.log(res)
+                if (!res.data) {
+                    toastr.error(`El nombre del ticket (${inputs.name}) ya está en uso, por favor corregir campo.`, 'Nombre no disponible')
+                } else {
+                    axios({
+                        url: "/a/tickets",
+                        method: "post",
+                        data: {
+                            _method: "post",
+                            name: inputs.name,
+                            user: inputs.user
+                        }
+                    }).then(res => {
+                        if( res.data ){
+                            toastr.success(`Ticket '${inputs.name}' agregado y asignado correctamente.`, 'Agregado Correctamente.')
+                            $("#create").modal("hide")
+                        }else{
+                            toastr.error(`El nombre del ticket '${inputs.name}' ya está en uso, por favor corregir campo.`, 'Nombre no disponible')
+                        }
+                    }).catch(err => {
+                        toastr.error(`Hubo un error al enviar el formulario, intentar nuevamente.`, 'Error al enviar')
+                    })
+                }
+            }).catch(err => {
+                toastr.error(`Hubo un error al enviar el formulario, intentar nuevamente.`, 'Error al enviar')
+            })
+        }
+    </script>
+@endif
 @endsection

@@ -1,3 +1,4 @@
+import toastr from "toastr";
 /**
  * First we will load all of this project's JavaScript dependencies which
  * includes Vue and other libraries. It is a great starting point when
@@ -7,7 +8,15 @@
 require('./bootstrap');
 
 window.Vue = require('vue');
+window.toastr = toastr;
 
+toastr.options = {
+    "closeButton": false,
+    "progressBar": true,
+    "preventDuplicates": true,
+    "showEasing": "swing",
+    "hideEasing": "linear",
+};
 /**
  * The following block of code may be used to automatically register your
  * Vue components. It will recursively scan this directory for the Vue

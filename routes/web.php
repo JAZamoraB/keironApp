@@ -18,6 +18,8 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::resource('tickets', 'TicketsController')->only(['store']);
+Route::post('/ticketValidation', 'TicketsController@ticketValidation');
+Route::post('/a/tickets', 'TicketsController@asyncCreate');
 
 Auth::routes();
 
