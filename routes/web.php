@@ -17,9 +17,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::resource('tickets', 'TicketsController')->only(['store']);
-Route::post('/ticketValidation', 'TicketsController@ticketValidation');
-Route::post('/a/tickets', 'TicketsController@asyncCreate');
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('tickets', 'TicketsController')->only(['store', 'destroy']);
+    Route::post('/ticketValidation', 'TicketsController@ticketValidation');
+    Route::post('/a/tickets', 'TicketsController@asyncCreate');
+    Route::patch('/a/e/tickets', 'TicketsController@asyncEdit');
+    Route::get('/a/a/redeemTicket/{id}', 'TicketsController@asyncRedeem');
+});
 
 Auth::routes();
 

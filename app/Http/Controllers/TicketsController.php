@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Ticket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TicketsController extends Controller
 {
@@ -24,6 +25,23 @@ class TicketsController extends Controller
         // dd($NU);
     }
 
+    public function destroy(Request $request, $id)
+    {
+        Ticket::find($id)->delete();
+        return redirect()->back();
+    }
+    public function asyncRedeem($id)
+    {
+        $t = Ticket::find($id);
+        if(Auth::user()->id != $t->user_id){
+            return "403";
+        }
+        $t->used = true;
+        $t->save();
+        return $t;
+        return redirect()->back();
+    }
+
     public function asyncCreate(Request $request){
         // return $request->all();
         if(Ticket::where("name", $request->name)->first()){
@@ -31,6 +49,14 @@ class TicketsController extends Controller
         }
         $new = Ticket::create(["user_id" => $request->input("user"), "name" => $request->input("name")]);
         return $new;
+    }
+    public function asyncEdit(Request $request){
+        // return $request->all();
+        if(!Ticket::find($request->id) || Ticket::where(["name" => $request->name, ["id", "<>", $request->id]])->first()){
+            return false;
+        }
+        Ticket::find($request->id)->update(["user_id" => $request->input("user"), "name" => $request->input("name")]);
+        return Ticket::with("user")->   find($request->id);
     }
     public function ticketValidation(Request $request){
         if(Ticket::where("name", $request->name)->first()){

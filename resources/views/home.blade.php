@@ -45,7 +45,7 @@
                             </tr>
                         </thead>
                         <tbody style="font-family: OpenSans !important;">
-                            @foreach (Auth::user()->tickets as $ticket)
+                            @foreach (Auth::user()->tickets()->orderBy("name")->get() as $ticket)
                             <tr>
                                 <th scope="row">{{$ticket->name}}</th>
                                 <td>{{$ticket->created_at}}</td>
@@ -57,7 +57,7 @@
                                         Ya se ha reclamado
                                     </button>
                                     @else   
-                                    <button class="btn btn-sm btn-info" style="font-family: Roboto-Bold;">
+                                    <button onclick="redeemTicket({{$ticket->id}})" class="btn btn-sm btn-info" style="font-family: Roboto-Bold;">
                                         <i class="fas fa-exclamation-circle"></i>
                                         Utilizar
                                     </button>
@@ -81,20 +81,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (App\Ticket::all() as $ticket)
-                            <tr>
-                                <th scope="row">{{$ticket->name}}</th>
-                                <td>{{$ticket->user->name}}</td>
+                            @foreach (App\Ticket::orderby("name")->get() as $ticket)
+                            <tr data-ticket="{{$ticket->id}}">
+                                <th data-name>{{$ticket->name}}</th>
+                                <td data-user>{{$ticket->user->name}}</td>
                                 <td>@if ($ticket->used) Utilizado el {{$ticket->updated_at}} @else No @endif</td>
                                 <td>
                                     <div class="btn-group btn-group-sm" style="font-family: Roboto;">
-                                        <button type="button" class="btn btn-info border-0" data-toggle="modal"
-                                        data-target="#edit">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </button>
-                                        <button type="button" class="btn btn-danger border-0">
-                                            <i class="fas fa-trash-alt"></i> Eliminar
-                                        </button>
+                                        @if (!$ticket->used)
+                                            <button data-modalButton type="button" class="btn btn-info border-0" data-toggle="modal"
+                                            data-target="#edit" data-value="{{json_encode($ticket)}}">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                        @endif
+                                        <form action="{{route('tickets.destroy', $ticket->id)}}" method="post">
+                                            @csrf
+                                            @method('delete')
+                                            <button type="submit" class="btn btn-danger border-0">
+                                                <i class="fas fa-trash-alt"></i> Eliminar
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -133,14 +139,14 @@
                 <div class="modal-body">
                     @method('post')
                     @csrf
-                    <div class="form-row">
+                    <div class="form-row ">
                         <div class="col">
                             <label for="Tname">Nombre Ticket</label>
                             <input type="text" class="form-control" placeholder="Nombre Ticket" id="Tname" name="Tname"
                                 required>
                         </div>
                         <div class="col">
-                            <label for="Tuser">Nombre Ticket</label>
+                            <label for="Tuser">Usuario</label>
                             <select name="Tuser" id="Tuser" class="form-control" required>
                                 <option value="" selected disabled>Selecciona una opción</option>
                                 @foreach (\App\User::all() as $user)
@@ -165,7 +171,7 @@
         </div>
     </div>
 </div>
-{{-- <div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="editTitle" aria-hidden="true">
+<div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="editTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -174,19 +180,19 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="{{route('tickets.store')}}" method="POST">
+            <form action="" method="POST">
                 <div class="modal-body">
-                    @method('post')
+                    @method('patch')
                     @csrf
                     <div class="form-row">
                         <div class="col">
-                            <label for="Tname">Nombre Ticket</label>
-                            <input type="text" class="form-control" placeholder="Nombre Ticket" id="Tname" name="Tname"
+                            <label for="ETname">Nombre Ticket</label>
+                            <input type="text" class="form-control" placeholder="Nombre Ticket" id="ETname" name="ETname"
                                 required>
                         </div>
                         <div class="col">
-                            <label for="Tuser">Nombre Ticket</label>
-                            <select name="Tuser" id="Tuser" class="form-control" required>
+                            <label for="ETuser">Nombre Ticket</label>
+                            <select name="ETuser" id="ETuser" class="form-control" required>
                                 <option value="" selected disabled>Selecciona una opción</option>
                                 @foreach (\App\User::all() as $user)
                                 <option value="{{$user->id}}">{{$user->name}} - {{$user->email}}</option>
@@ -209,7 +215,7 @@
             </form>
         </div>
     </div>
-</div> --}}
+</div>
 @endif
 {{-- <div class="container">
     <div class="row justify-content-center">
@@ -251,6 +257,51 @@
 @section('js')
 @if (Auth::user()->role->id == 1)
     <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            $('#edit').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget) 
+                var ticket = button.data('value'); 
+                var modal = $(this)
+                modal.find('.modal-title').text(`Editar Ticket #${ticket.id} ${ticket.name}`)
+                modal.find(`#ETname`).val(ticket.name)
+                modal.find(`#ETuser option[value=${ticket.user_id}]`).attr('selected', true)
+                var form = modal.find('form')
+                form.unbind();
+                form.on({
+                    submit: (event) => {
+                        event.preventDefault();
+                        var data = {
+                            _method: 'patch',
+                            id: ticket.id,
+                            user: form.find("#ETuser").val(),
+                            name: form.find("#ETname").val()
+                        }
+                        axios({
+                            url: '/a/e/tickets',
+                            method: 'patch',
+                            data: data
+                        }).then(res => {
+                            if(res.data){
+                                var ticket = res.data;
+                                toastr.success("Registro Modificado Exitosamente.", "Cambios guardados");
+                                var tr = $(`[data-ticket=${ticket.id}]`)
+                                tr.find('[data-name]').html(ticket.name)
+                                tr.find('[data-user]').html(ticket.user.name)
+                                modal.modal("hide");
+                                setTimeout(() => {
+                                    window.location.reload()
+                                }, 2000)
+                            }else{
+                                toastr.error("El nombre Ingresado ya está en uso.", "Error al guardar");
+                            }
+                        }).catch(err => {
+                            toastr.error("Hubo un error al enviar, reintentar.", "Error al guardar");
+                        })
+                    }
+                });
+                // modal.find('.modal-body input').val(ticket)
+            })
+        })
         function validateForm(){
             event.preventDefault();
             var inputs = {
@@ -279,6 +330,10 @@
                         if( res.data ){
                             toastr.success(`Ticket '${inputs.name}' agregado y asignado correctamente.`, 'Agregado Correctamente.')
                             $("#create").modal("hide")
+                            
+                            setTimeout(() => {
+                                    window.location.reload()
+                                }, 2000)
                         }else{
                             toastr.error(`El nombre del ticket '${inputs.name}' ya está en uso, por favor corregir campo.`, 'Nombre no disponible')
                         }
@@ -292,4 +347,22 @@
         }
     </script>
 @endif
+<script>
+    function redeemTicket(ticketID){
+        axios({
+            url: `/a/a/redeemTicket/${ticketID}`,
+            method: 'get'
+        }).then( res => {
+            if (res.data == 403){
+                return toastr.info("No tienes permiso para canjear este Ticket.", "Ticket Incorrecto");
+            }
+            toastr.success("Ticket Canjeado correctamente.", "Activación Exitosa");
+            setTimeout(() => {
+                window.location.reload()
+            }, 1000);
+        }).catch( err => {
+            toastr.error("Hubo un error al canjear, intentar nuevamente.", "Error al Activar");
+        })
+    }
+</script>
 @endsection
