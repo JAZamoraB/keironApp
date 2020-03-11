@@ -11,15 +11,19 @@
                 <img src="/assets/img/Imagotipo-fucsia.png">
             </a>
         </div>
+        <div class="col text-white" style="font-family: OpenSans;">
+            <i class="fas fa-info-circle"></i> Sesión iniciada como <span style="font-family: OpenSans-Bold;">{{Auth::user()->role->name}}</span>
+        </div>
         <div class="col py-4 py-md-5 text-light">
             <ul class="nav nav-pills justify-content-center mb-3" id="pills-tab" role="tablist">
+                @if (Auth::user()->role->id != 1)
                 <li class="nav-item">
                     <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab"
                         aria-controls="pills-home" aria-selected="true">Mis tickets</a>
                 </li>
-                @if (Auth::user()->role->id == 1)
+                @else
                 <li class="nav-item">
-                    <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab"
+                    <a class="nav-link active" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab"
                         aria-controls="pills-profile" aria-selected="false">Gestión de tickets</a>
                 </li>
                 @endif
@@ -34,6 +38,7 @@
                 </li>
             </ul>
             <div class="tab-content" id="pills-tabContent">
+                @if (Auth::user()->role->id != 1)
                 <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
                     <table class="table table-dark">
                         <thead>
@@ -69,8 +74,8 @@
                     </table>
                 </div>
 
-                @if (Auth::user()->role->id == 1)
-                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                @else
+                <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
                     <table class="table table-dark">
                         <thead>
                             <tr>
@@ -149,7 +154,7 @@
                             <label for="Tuser">Usuario</label>
                             <select name="Tuser" id="Tuser" class="form-control" required>
                                 <option value="" selected disabled>Selecciona una opción</option>
-                                @foreach (\App\User::all() as $user)
+                                @foreach (\App\User::where("role_id" , "<>", 1)->get() as $user)
                                 <option value="{{$user->id}}">{{$user->name}} - {{$user->email}}</option>
                                 @endforeach
                             </select>
@@ -191,10 +196,10 @@
                                 required>
                         </div>
                         <div class="col">
-                            <label for="ETuser">Nombre Ticket</label>
+                            <label for="ETuser">Usuario</label>
                             <select name="ETuser" id="ETuser" class="form-control" required>
                                 <option value="" selected disabled>Selecciona una opción</option>
-                                @foreach (\App\User::all() as $user)
+                                @foreach (\App\User::where("role_id", "<>", 1)->get() as $user)
                                 <option value="{{$user->id}}">{{$user->name}} - {{$user->email}}</option>
                                 @endforeach
                             </select>
@@ -217,41 +222,6 @@
     </div>
 </div>
 @endif
-{{-- <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Dashboard {{Auth::user()->role->id}}</div>
-
-<div class="card-body">
-    @if (session('status'))
-    <div class="alert alert-success" role="alert">
-        {{ session('status') }}
-    </div>
-    @endif
-
-    <li class="nav-item dropdown">
-        <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown"
-            aria-haspopup="true" aria-expanded="false" v-pre>
-            {{ Auth::user()->name }} <span class="caret"></span>
-        </a>
-
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-                                             document.getElementById('logout-form').submit();">
-                {{ __('Logout') }}
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-        </div>
-    </li>
-    You are logged in!
-</div>
-</div>
-</div>
-</div>
-</div> --}}
 @endsection
 
 @section('js')
@@ -346,7 +316,7 @@
             })
         }
     </script>
-@endif
+@else
 <script>
     function redeemTicket(ticketID){
         axios({
@@ -365,4 +335,5 @@
         })
     }
 </script>
+@endif
 @endsection
