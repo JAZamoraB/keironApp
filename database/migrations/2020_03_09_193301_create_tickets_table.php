@@ -20,6 +20,8 @@ class CreateTicketsTable extends Migration
             $table->string('name')->unique();
             $table->boolean('used')->default(false);
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 
